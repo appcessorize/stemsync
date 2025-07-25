@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ["bun"]
+
+[phases.install]
+cmds = ["cd ../.. && bun install"]
+
+[phases.build]
+cmds = ["cd ../.. && bun run build --filter=client..."]
+
+[start]
+cmd = "cd apps/client && bun run start"
+
+[variables]
+PORT = "3000"
