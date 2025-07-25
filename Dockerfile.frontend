@@ -29,7 +29,6 @@ COPY --from=base /app/apps/client/.next ./apps/client/.next
 COPY --from=base /app/apps/client/public ./apps/client/public
 COPY --from=base /app/apps/client/package.json ./apps/client/
 COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/apps/client/.env* ./apps/client/ || true
 
 WORKDIR /app/apps/client
 
