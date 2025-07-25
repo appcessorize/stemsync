@@ -395,11 +395,12 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
       if (audioIndex !== null) {
         const audioSource = state.audioSources[audioIndex];
         const audioBuffer = state.audioCache.get(audioSource.url);
-        if (!audioBuffer)
-          throw new Error(
-            `Audio buffer not decoded for url: ${audioSource.url}`
-          );
-        newDuration = audioBuffer.duration;
+        if (audioBuffer) {
+          newDuration = audioBuffer.duration;
+        } else {
+          console.warn(`Audio buffer not yet decoded for url: ${audioSource.url}`);
+          // Don't throw error - audio might still be loading
+        }
       }
 
       // Reset timing state and update selected ID
@@ -994,8 +995,9 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
         const stemSources = STEMS.map(stem => ({ url: stem.url }));
         await state.handleSetAudioSources({ sources: stemSources });
       } else {
-        // When disabling stem mode, might want to reload normal audio sources
-        // For now, just keep existing sources
+        // When disabling stem mode, clear stem assignments
+        set({ assignedStems: [] });
+        // Could reload normal audio sources here if needed
       }
     },
 
@@ -1061,11 +1063,6 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
         
         // Update audioSources state
         set({ audioSources: sources });
-        
-        // Update selected audio URL to first stem if needed
-        if (sources.length > 0 && (!state.selectedAudioUrl || !sources.find(s => s.url === state.selectedAudioUrl))) {
-          state.setSelectedAudioUrl(sources[0].url);
-        }
       } else {
         // In normal mode, update audioSources
         set({ audioSources: sources });
@@ -1080,6 +1077,18 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
 
       for (const source of newSources) {
         await processNewAudioSource({ url: source.url });
+      }
+      
+      // After loading all sources, update selected URL if needed (only in stem mode)
+      if (state.isStemMode && sources.length > 0) {
+        const currentState = get();
+        if (!currentState.selectedAudioUrl || !sources.find(s => s.url === currentState.selectedAudioUrl)) {
+          // Only set if all sources are loaded
+          const firstSource = sources[0];
+          if (currentState.audioCache.has(firstSource.url)) {
+            currentState.setSelectedAudioUrl(firstSource.url);
+          }
+        }
       }
     },
 

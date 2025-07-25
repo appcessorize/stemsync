@@ -165,15 +165,18 @@ export const WebSocketManager = ({
             
             // If in stem mode, reload audio sources with new assignments
             const state = useGlobalStore.getState();
-            if (state.isStemMode) {
-              // Trigger reload of stem audio sources based on new assignments
-              const stemSources = state.assignedStems.map(stemId => {
+            if (state.isStemMode && assignments[clientId]) {
+              // Use the assignments we just received
+              const stemSources = assignments[clientId].map(stemId => {
                 const stem = STEMS.find(s => s.id === stemId);
                 return { url: stem?.url || "" };
               }).filter(s => s.url);
               
               if (stemSources.length > 0) {
-                state.handleSetAudioSources({ sources: stemSources });
+                // Delay slightly to ensure state is updated
+                setTimeout(() => {
+                  state.handleSetAudioSources({ sources: stemSources });
+                }, 100);
               }
             }
           }
