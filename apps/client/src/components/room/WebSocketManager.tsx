@@ -154,6 +154,14 @@ export const WebSocketManager = ({
           setConnectedClients(event.clients);
         } else if (event.type === "SET_AUDIO_SOURCES") {
           handleSetAudioSources({ sources: event.sources });
+        } else if (event.type === "STEM_ASSIGNMENT") {
+          // Handle stem assignments
+          const { assignments } = event;
+          const clientId = localStorage.getItem("clientId");
+          if (clientId && assignments[clientId]) {
+            useGlobalStore.setState({ assignedStems: assignments[clientId] });
+            console.log("Received stem assignment:", assignments[clientId]);
+          }
         }
       } else if (response.type === "SCHEDULED_ACTION") {
         // handle scheduling action

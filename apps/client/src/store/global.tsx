@@ -86,6 +86,7 @@ interface GlobalStateValues {
   
   // Stem mode
   isStemMode: boolean;
+  assignedStems: string[];
 }
 
 interface GlobalState extends GlobalStateValues {
@@ -185,6 +186,7 @@ const initialState: GlobalStateValues = {
     maxAttempts: 0,
   },
   isStemMode: false,
+  assignedStems: [],
 };
 
 const getAudioPlayer = (state: GlobalState) => {
@@ -931,32 +933,43 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
       
       // Check if in stem mode
       if (state.isStemMode) {
-        // Get current client ID from localStorage
-        const currentClientId = typeof window !== "undefined" 
-          ? localStorage.getItem("clientId") || ""
-          : "";
+        // Use assigned stems from server if available
+        if (state.assignedStems.length > 0) {
+          // Load all assigned stems
+          sources = state.assignedStems.map(stemId => {
+            const stem = STEMS.find(s => s.id === stemId);
+            return { url: stem?.url || "" };
+          }).filter(s => s.url);
           
-        // Find current device index
-        const currentDeviceIndex = state.connectedClients.findIndex(
-          (client) => client.clientId === currentClientId
-        );
-        
-        if (currentDeviceIndex >= 0) {
-          // Get assigned stem for this device
-          const assignedStem = getAssignedStem(currentDeviceIndex);
+          console.log(`Stem mode: Loading ${sources.length} assigned stems from server`);
+        } else {
+          // Fallback to index-based assignment if no server assignment
+          const currentClientId = typeof window !== "undefined" 
+            ? localStorage.getItem("clientId") || ""
+            : "";
+            
+          // Find current device index
+          const currentDeviceIndex = state.connectedClients.findIndex(
+            (client) => client.clientId === currentClientId
+          );
           
-          // Override sources with just the assigned stem
-          sources = [{ url: assignedStem.url }];
-          
-          // Also update audioSources state
-          set({ audioSources: sources });
-          
-          // If there's a selected audio URL that's not the stem, update it
-          if (state.selectedAudioUrl && state.selectedAudioUrl !== assignedStem.url) {
-            state.setSelectedAudioUrl(assignedStem.url);
+          if (currentDeviceIndex >= 0) {
+            // Get assigned stem for this device
+            const assignedStem = getAssignedStem(currentDeviceIndex);
+            
+            // Override sources with just the assigned stem
+            sources = [{ url: assignedStem.url }];
+            
+            console.log(`Stem mode: Loading stem ${assignedStem.name} for device ${currentDeviceIndex} (fallback)`);
           }
-          
-          console.log(`Stem mode: Loading stem ${assignedStem.name} for device ${currentDeviceIndex}`);
+        }
+        
+        // Update audioSources state
+        set({ audioSources: sources });
+        
+        // Update selected audio URL to first stem if needed
+        if (sources.length > 0 && (!state.selectedAudioUrl || !sources.find(s => s.url === state.selectedAudioUrl))) {
+          state.setSelectedAudioUrl(sources[0].url);
         }
       } else {
         // In normal mode, update audioSources

@@ -20,6 +20,7 @@ import { calculateGainFromDistanceToSource } from "../spatial";
 import { sendBroadcast, sendUnicast } from "../utils/responses";
 import { positionClientsInCircle } from "../utils/spatial";
 import { WSData } from "../utils/websocket";
+import { stemDistributor } from "../services/stemDistributor";
 
 interface RoomData {
   audioSources: AudioSourceType[];
@@ -82,6 +83,7 @@ export class RoomManager {
   };
   private playbackControlsPermissions: PlaybackControlsPermissionsType =
     "EVERYONE";
+  private stemAssignments = new Map<string, string[]>(); // clientId -> stemIds[]
 
   constructor(
     private readonly roomId: string,
@@ -134,6 +136,7 @@ export class RoomManager {
    */
   removeClient(clientId: string): void {
     this.clients.delete(clientId);
+    this.stemAssignments.delete(clientId);
 
     // Reposition remaining clients if any
     if (this.clients.size > 0) {
@@ -185,6 +188,41 @@ export class RoomManager {
    */
   getClients(): ClientType[] {
     return Array.from(this.clients.values());
+  }
+
+  /**
+   * Get stem assignments for all clients
+   */
+  getStemAssignments(): Record<string, string[]> {
+    const assignments: Record<string, string[]> = {};
+    this.stemAssignments.forEach((stems, clientId) => {
+      assignments[clientId] = stems;
+    });
+    return assignments;
+  }
+
+  /**
+   * Redistribute stems among all connected clients
+   */
+  redistributeStems(server: Server): void {
+    const clientIds = Array.from(this.clients.keys());
+    
+    // Get new stem distribution
+    const newAssignments = stemDistributor.distributeStems(clientIds);
+    
+    // Update internal state
+    this.stemAssignments = newAssignments;
+    
+    // Broadcast stem assignments to all clients
+    const message: WSBroadcastType = {
+      type: "ROOM_EVENT",
+      event: {
+        type: "STEM_ASSIGNMENT",
+        assignments: this.getStemAssignments(),
+      },
+    };
+    
+    sendBroadcast({ server, roomId: this.roomId, message });
   }
 
   /**

@@ -59,6 +59,9 @@ export const handleOpen = (ws: ServerWebSocket<WSData>, server: Server) => {
 
   const message = createClientUpdate(roomId);
   sendBroadcast({ server, roomId, message });
+  
+  // Redistribute stems after client join
+  room.redistributeStems(server);
 };
 
 export const handleMessage = async (
@@ -121,6 +124,11 @@ export const handleClose = async (
     const message = createClientUpdate(roomId);
     ws.unsubscribe(roomId);
     server.publish(roomId, JSON.stringify(message));
+    
+    // Redistribute stems after client leave if room still has clients
+    if (room && room.getClients().length > 0) {
+      room.redistributeStems(server);
+    }
   } catch (error) {
     console.error(
       `Error handling WebSocket close for ${ws.data?.username}:`,

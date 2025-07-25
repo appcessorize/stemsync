@@ -27,11 +27,19 @@ const SetAudioSourcesSchema = z.object({
 });
 export type SetAudioSourcesType = z.infer<typeof SetAudioSourcesSchema>;
 
+// Stem assignments
+const StemAssignmentSchema = z.object({
+  type: z.literal("STEM_ASSIGNMENT"),
+  assignments: z.record(z.string(), z.array(z.string())), // clientId -> stemIds[]
+});
+export type StemAssignmentType = z.infer<typeof StemAssignmentSchema>;
+
 const RoomEventSchema = z.object({
   type: z.literal("ROOM_EVENT"),
   event: z.discriminatedUnion("type", [
     ClientChangeMessageSchema,
     SetAudioSourcesSchema,
+    StemAssignmentSchema,
   ]),
 });
 
