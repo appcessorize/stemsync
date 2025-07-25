@@ -902,7 +902,20 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
 
     toggleShuffle: () => set((state) => ({ isShuffled: !state.isShuffled })),
     
-    toggleStemMode: () => set((state) => ({ isStemMode: !state.isStemMode })),
+    toggleStemMode: () => {
+      const state = get();
+      const newStemMode = !state.isStemMode;
+      set({ isStemMode: newStemMode });
+      
+      if (newStemMode) {
+        // When enabling stem mode, load stem audio sources
+        const stemSources = STEMS.map(stem => ({ url: stem.url }));
+        state.handleSetAudioSources({ sources: stemSources });
+      } else {
+        // When disabling stem mode, might want to reload normal audio sources
+        // For now, just keep existing sources
+      }
+    },
 
     setIsSpatialAudioEnabled: (isEnabled) =>
       set({ isSpatialAudioEnabled: isEnabled }),
