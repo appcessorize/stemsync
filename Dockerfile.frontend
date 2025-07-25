@@ -1,0 +1,39 @@
+FROM oven/bun:1 as base
+WORKDIR /app
+
+# Copy package files
+COPY package.json bun.lock turbo.json ./
+COPY apps/server/package.json ./apps/server/
+COPY apps/client/package.json ./apps/client/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Set build-time env vars
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WS_URL
+
+# Build the application
+RUN bun run build --filter=client...
+
+# Production stage
+FROM oven/bun:1 as runner
+WORKDIR /app
+
+# Copy built application
+COPY --from=base /app/apps/client/.next ./apps/client/.next
+COPY --from=base /app/apps/client/public ./apps/client/public
+COPY --from=base /app/apps/client/package.json ./apps/client/
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/apps/client/.env* ./apps/client/ || true
+
+WORKDIR /app/apps/client
+
+EXPOSE 3000
+
+# Next.js production server
+CMD ["bun", "run", "start"]
