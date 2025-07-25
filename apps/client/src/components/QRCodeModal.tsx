@@ -22,7 +22,7 @@ export function QRCodeModal({ roomId }: QRCodeModalProps) {
       setCopied(true);
       toast.success("Room URL copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error("Failed to copy URL");
     }
   };
