@@ -1,0 +1,23 @@
+*.ctx.md
+
+# Add .turbo to your .gitignore file. The turbo CLI uses these folders for persisting logs, outputs, and other functionality.
+.turbo
+node_modules
+
+# uploads in server
+apps/server/uploads/*
+.DS_Store
+
+# Environment files
+.env
+.env.*
+apps/client/.env
+apps/client/.env.*
+apps/server/.env
+apps/server/.env.*
+
+# Build outputs
+dist/
+.next/
+apps/client/.next/
+apps/server/dist/
