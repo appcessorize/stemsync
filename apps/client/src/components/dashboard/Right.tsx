@@ -1,14 +1,19 @@
 import { cn } from "@/lib/utils";
-import { Info } from "lucide-react";
+import { Info, Layers } from "lucide-react";
 import { motion } from "motion/react";
 import { UserGrid } from "../room/UserGrid";
 import { StemDebugView } from "../StemDebugView";
+import { useGlobalStore } from "@/store/global";
+import { Switch } from "../ui/switch";
 
 interface RightProps {
   className?: string;
 }
 
 export const Right = ({ className }: RightProps) => {
+  const isStemMode = useGlobalStore((state) => state.isStemMode);
+  const toggleStemMode = useGlobalStore((state) => state.toggleStemMode);
+  
   return (
     <motion.div
       className={cn(
@@ -18,6 +23,20 @@ export const Right = ({ className }: RightProps) => {
     >
       <motion.div className="flex-1">
         <UserGrid />
+      </motion.div>
+
+      {/* Stem Mode Toggle - Always visible on mobile */}
+      <motion.div className="mx-3 mb-2 bg-neutral-800/30 rounded-lg p-3">
+        <div className="flex justify-between items-center">
+          <div className="text-xs text-neutral-300 flex items-center gap-1.5">
+            <Layers className="h-3.5 w-3.5 text-primary-500" />
+            <span>Stem Mode</span>
+          </div>
+          <Switch
+            checked={isStemMode}
+            onCheckedChange={toggleStemMode}
+          />
+        </div>
       </motion.div>
 
       <motion.div className="mx-3 mb-3">

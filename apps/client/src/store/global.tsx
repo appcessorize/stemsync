@@ -432,17 +432,27 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
       }
 
       const waitTimeSeconds = getWaitTimeSeconds(state, data.targetServerTime);
+      
+      // In stem mode, play the first assigned stem instead of the broadcast URL
+      let audioToPlay = data.audioSource;
+      if (state.isStemMode && state.audioSources.length > 0) {
+        audioToPlay = state.audioSources[0].url;
+        console.log(
+          `Stem mode: Playing assigned stems instead of ${data.audioSource}`
+        );
+      }
+      
       console.log(
-        `Playing track ${data.audioSource} at ${data.trackTimeSeconds} seconds in ${waitTimeSeconds}`
+        `Playing track ${audioToPlay} at ${data.trackTimeSeconds} seconds in ${waitTimeSeconds}`
       );
 
       // Update the selected audio ID
-      if (data.audioSource !== state.selectedAudioUrl) {
-        set({ selectedAudioUrl: data.audioSource });
+      if (audioToPlay !== state.selectedAudioUrl) {
+        set({ selectedAudioUrl: audioToPlay });
       }
 
       // Find the index of the audio to play
-      const audioIndex = state.findAudioIndexByUrl(data.audioSource);
+      const audioIndex = state.findAudioIndexByUrl(audioToPlay);
       if (audioIndex === null) {
         // Pause current track to prevent interference
         if (state.isPlaying) {

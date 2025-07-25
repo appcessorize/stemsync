@@ -27,30 +27,30 @@ export function StemDebugView() {
     : (currentDeviceIndex >= 0 ? [getAssignedStem(currentDeviceIndex)] : []);
 
   return (
-    <div className="bg-neutral-900/95 backdrop-blur-md border border-neutral-800 rounded-lg p-4 space-y-4">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Music size={16} />
+    <div className="bg-neutral-900/95 backdrop-blur-md border border-neutral-800 rounded-lg p-3 lg:p-4 space-y-3 lg:space-y-4">
+      <div className="flex items-center gap-2 text-xs lg:text-sm font-medium">
+        <Music size={14} className="lg:w-4 lg:h-4" />
         <span>Stem Debug View</span>
       </div>
 
       {/* My Assigned Stems */}
       {myAssignedStems.length > 0 && (
-        <div className="bg-neutral-800/50 rounded-md p-3 space-y-2">
+        <div className="bg-neutral-800/50 rounded-md p-2 lg:p-3 space-y-2">
           <p className="text-xs text-neutral-400">This Device Playing:</p>
-          <div className="space-y-2">
+          <div className="space-y-1 lg:space-y-2">
             {myAssignedStems.map((stem) => (
-              <div key={stem.id} className="flex items-center gap-3">
+              <div key={stem.id} className="flex items-center gap-2 lg:gap-3">
                 <div
-                  className="w-4 h-4 rounded-full"
+                  className="w-3 h-3 lg:w-4 lg:h-4 rounded-full flex-shrink-0"
                   style={{ backgroundColor: stem.color }}
                 />
-                <span className="font-medium">{stem.name}</span>
+                <span className="text-xs lg:text-sm font-medium truncate">{stem.name}</span>
                 {isPlaying && (
                   <motion.div
                     animate={{ opacity: [0.5, 1] }}
                     transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
                   >
-                    <Volume2 size={16} className="text-green-500" />
+                    <Volume2 size={12} className="text-green-500 lg:w-4 lg:h-4" />
                   </motion.div>
                 )}
               </div>
@@ -101,8 +101,8 @@ export function StemDebugView() {
         </div>
       </div>
 
-      {/* Device Assignments */}
-      <div className="space-y-2">
+      {/* Device Assignments - Hidden on mobile, visible on desktop */}
+      <div className="space-y-2 hidden lg:block">
         <p className="text-xs text-neutral-400">
           Device Assignments ({connectedClients.length} connected):
         </p>
