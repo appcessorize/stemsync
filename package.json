@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@aws-sdk/s3-request-presigner": "^3.828.0",
+    "react-qr-code": "^2.0.18",
     "turbo": "^2.4.4"
   }
 }

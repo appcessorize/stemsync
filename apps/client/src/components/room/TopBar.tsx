@@ -4,9 +4,7 @@ import { Hash, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { SyncProgress } from "../ui/SyncProgress";
-import { FaDiscord } from "react-icons/fa";
-import { FaGithub } from "react-icons/fa";
-import { SOCIAL_LINKS } from "@/constants";
+import { QRCodeModal } from "../QRCodeModal";
 
 interface TopBarProps {
   roomId: string;
@@ -29,7 +27,7 @@ export const TopBar = ({ roomId }: TopBarProps) => {
             href="/"
             className="font-medium hover:text-white transition-colors"
           >
-            Beatsync
+            Stemsync
           </Link>
           <div className="flex items-center">
             <div className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></div>
@@ -101,27 +99,8 @@ export const TopBar = ({ roomId }: TopBarProps) => {
             </span>
           </div>
         </div>
-
-        <div className="flex items-center justify-center gap-2.5">
-          {/* Discord icon */}
-          <a
-            href={SOCIAL_LINKS.discord}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-neutral-400 hover:text-white transition-colors"
-          >
-            <FaDiscord className="size-[17px]" />
-          </a>
-          {/* GitHub icon in the top right */}
-          <a
-            href={SOCIAL_LINKS.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-neutral-400 hover:text-white transition-colors"
-          >
-            <FaGithub className="size-4" />
-          </a>
-        </div>
+        
+        <QRCodeModal roomId={roomId} />
       </div>
     );
   }

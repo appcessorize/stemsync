@@ -58,16 +58,6 @@ export const Left = ({ className }: LeftProps) => {
           <Library className="h-4 w-4" />
           <span>Default Library</span>
         </Button>
-
-        <a href="https://cobalt.tools/" target="_blank">
-          <Button
-            className="w-full flex justify-start gap-3 py-2 text-white font-medium bg-white/10 hover:bg-white/15 rounded-md text-xs transition-colors duration-200 cursor-pointer"
-            variant="ghost"
-          >
-            <Search className="h-4 w-4" />
-            <span>Search Music</span>
-          </Button>
-        </a>
       </motion.div>
 
       <Separator className="bg-neutral-800/50" />
