@@ -10,6 +10,7 @@ import {
 } from "@beatsync/shared";
 import { useEffect } from "react";
 import { useWebSocketReconnection } from "@/hooks/useWebSocketReconnection";
+import { STEMS } from "@/constants/stems";
 
 // Helper function for NTP response handling
 const handleNTPResponse = (response: NTPResponseMessageType) => {
@@ -161,6 +162,20 @@ export const WebSocketManager = ({
           if (clientId && assignments[clientId]) {
             useGlobalStore.setState({ assignedStems: assignments[clientId] });
             console.log("Received stem assignment:", assignments[clientId]);
+            
+            // If in stem mode, reload audio sources with new assignments
+            const state = useGlobalStore.getState();
+            if (state.isStemMode) {
+              // Trigger reload of stem audio sources based on new assignments
+              const stemSources = state.assignedStems.map(stemId => {
+                const stem = STEMS.find(s => s.id === stemId);
+                return { url: stem?.url || "" };
+              }).filter(s => s.url);
+              
+              if (stemSources.length > 0) {
+                state.handleSetAudioSources({ sources: stemSources });
+              }
+            }
           }
         }
       } else if (response.type === "SCHEDULED_ACTION") {

@@ -31,6 +31,8 @@ interface AudioPlayerState {
   audioContext: AudioContext;
   sourceNode: AudioBufferSourceNode;
   gainNode: GainNode;
+  // For stem mode: multiple source nodes
+  stemSourceNodes?: AudioBufferSourceNode[];
 }
 
 enum AudioPlayerError {
@@ -661,7 +663,7 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
       audioIndex?: number;
     }) => {
       const state = get();
-      const { sourceNode, audioContext, gainNode } = getAudioPlayer(state);
+      const { sourceNode, audioContext, gainNode, stemSourceNodes } = getAudioPlayer(state);
 
       // Before any audio playback, ensure the context is running
       if (audioContext.state !== "running") {
@@ -670,12 +672,57 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
         return;
       }
 
-      // Stop any existing source node before creating a new one
+      // Stop any existing source nodes before creating new ones
       try {
         sourceNode.stop();
       } catch (_) {}
+      
+      // Stop any stem source nodes if in stem mode
+      if (stemSourceNodes) {
+        stemSourceNodes.forEach(node => {
+          try { node.stop(); } catch (_) {}
+        });
+      }
 
       const startTime = audioContext.currentTime + data.when;
+      
+      // In stem mode, play all assigned stems
+      if (state.isStemMode && state.audioSources.length > 0) {
+        const newStemSourceNodes: AudioBufferSourceNode[] = [];
+        
+        // Play each stem
+        for (let i = 0; i < state.audioSources.length; i++) {
+          const audioBuffer = state.audioCache.get(state.audioSources[i].url);
+          if (!audioBuffer) {
+            console.error(`Audio buffer not decoded for stem: ${state.audioSources[i].url}`);
+            continue;
+          }
+          
+          // Create source node for this stem
+          const stemSourceNode = audioContext.createBufferSource();
+          stemSourceNode.buffer = audioBuffer;
+          stemSourceNode.connect(gainNode);
+          stemSourceNode.start(startTime, data.offset);
+          newStemSourceNodes.push(stemSourceNode);
+        }
+        
+        // Update player state with stem nodes
+        set({
+          audioPlayer: {
+            ...state.audioPlayer!,
+            stemSourceNodes: newStemSourceNodes
+          },
+          isPlaying: true,
+          playbackStartTime: startTime,
+          playbackOffset: data.offset,
+          currentTime: data.offset,
+        });
+        
+        console.log(`Started playing ${newStemSourceNodes.length} stems`);
+        return;
+      }
+      
+      // Normal mode: single audio source
       const audioIndex = data.audioIndex ?? 0;
       const audioBuffer = state.audioCache.get(
         state.audioSources[audioIndex].url
@@ -800,10 +847,21 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
 
     pauseAudio: (data: { when: number }) => {
       const state = get();
-      const { sourceNode, audioContext } = getAudioPlayer(state);
+      const { sourceNode, audioContext, stemSourceNodes } = getAudioPlayer(state);
 
       const stopTime = audioContext.currentTime + data.when;
-      sourceNode.stop(stopTime);
+      
+      // Stop main source node
+      try {
+        sourceNode.stop(stopTime);
+      } catch (_) {}
+      
+      // Stop all stem nodes if in stem mode
+      if (stemSourceNodes) {
+        stemSourceNodes.forEach(node => {
+          try { node.stop(stopTime); } catch (_) {}
+        });
+      }
 
       // Calculate current position in the track at the time of pausing
       const elapsedSinceStart = stopTime - state.playbackStartTime;
@@ -912,15 +970,29 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
 
     toggleShuffle: () => set((state) => ({ isShuffled: !state.isShuffled })),
     
-    toggleStemMode: () => {
+    toggleStemMode: async () => {
       const state = get();
       const newStemMode = !state.isStemMode;
       set({ isStemMode: newStemMode });
       
       if (newStemMode) {
+        // Ensure audio system is initialized
+        if (!state.audioPlayer || state.isInitingSystem) {
+          console.log("Audio system not ready, initializing first...");
+          await new Promise(resolve => {
+            const checkInterval = setInterval(() => {
+              const currentState = get();
+              if (currentState.audioPlayer && !currentState.isInitingSystem) {
+                clearInterval(checkInterval);
+                resolve(undefined);
+              }
+            }, 100);
+          });
+        }
+        
         // When enabling stem mode, load stem audio sources
         const stemSources = STEMS.map(stem => ({ url: stem.url }));
-        state.handleSetAudioSources({ sources: stemSources });
+        await state.handleSetAudioSources({ sources: stemSources });
       } else {
         // When disabling stem mode, might want to reload normal audio sources
         // For now, just keep existing sources
