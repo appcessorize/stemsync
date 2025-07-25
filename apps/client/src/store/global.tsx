@@ -1028,6 +1028,12 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
 
       const state = get();
       
+      // Ensure audio system is initialized
+      if (!state.audioPlayer && !state.isInitingSystem) {
+        console.error("Cannot load audio sources - audio system not initialized");
+        throw new Error("Audio system not initialized. Click 'Start System' first.");
+      }
+      
       // Check if in stem mode
       if (state.isStemMode) {
         // Use assigned stems from server if available
@@ -1073,10 +1079,17 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
         (source) => !state.audioCache.has(source.url)
       );
 
-      console.log("newSources", newSources);
+      console.log("Loading new sources:", newSources.map(s => s.url));
 
       for (const source of newSources) {
-        await processNewAudioSource({ url: source.url });
+        try {
+          console.log(`Loading audio source: ${source.url}`);
+          await processNewAudioSource({ url: source.url });
+          console.log(`Successfully loaded: ${source.url}`);
+        } catch (error) {
+          console.error(`Failed to load audio source ${source.url}:`, error);
+          throw error; // Re-throw to handle upstream
+        }
       }
       
       // After loading all sources, update selected URL if needed (only in stem mode)

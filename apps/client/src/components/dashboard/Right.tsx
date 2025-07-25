@@ -3,6 +3,7 @@ import { Info, Layers } from "lucide-react";
 import { motion } from "motion/react";
 import { UserGrid } from "../room/UserGrid";
 import { StemDebugView } from "../StemDebugView";
+import { StemDebugPanel } from "../StemDebugPanel";
 import { useGlobalStore } from "@/store/global";
 import { Switch } from "../ui/switch";
 
@@ -42,6 +43,13 @@ export const Right = ({ className }: RightProps) => {
       <motion.div className="mx-3 mb-3">
         <StemDebugView />
       </motion.div>
+
+      {/* Stem Debug Panel - Only show in stem mode */}
+      {isStemMode && (
+        <motion.div className="mx-3 mb-3">
+          <StemDebugPanel />
+        </motion.div>
+      )}
 
       <motion.div className="flex flex-col gap-3 px-4 py-3 mt-1 bg-neutral-800/30 rounded-lg mx-3 mb-3 text-neutral-400">
         <div className="flex items-start gap-2">
