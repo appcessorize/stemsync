@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
 import { motion } from "motion/react";
 import { UserGrid } from "../room/UserGrid";
+import { StemDebugView } from "../StemDebugView";
 
 interface RightProps {
   className?: string;
@@ -17,6 +18,10 @@ export const Right = ({ className }: RightProps) => {
     >
       <motion.div className="flex-1">
         <UserGrid />
+      </motion.div>
+
+      <motion.div className="mx-3 mb-3">
+        <StemDebugView />
       </motion.div>
 
       <motion.div className="flex flex-col gap-3 px-4 py-3 mt-1 bg-neutral-800/30 rounded-lg mx-3 mb-3 text-neutral-400">

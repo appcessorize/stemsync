@@ -1,10 +1,11 @@
 "use client";
 
 import { useGlobalStore } from "@/store/global";
-import { Construction, Orbit } from "lucide-react";
+import { Construction, Orbit, Layers } from "lucide-react";
 import { motion } from "motion/react";
 import { usePostHog } from "posthog-js/react";
 import { Button } from "../ui/button";
+import { Switch } from "../ui/switch";
 
 export const AudioControls = () => {
   const posthog = usePostHog();
@@ -13,6 +14,8 @@ export const AudioControls = () => {
     (state) => state.sendStopSpatialAudio
   );
   const isLoadingAudio = useGlobalStore((state) => state.isInitingSystem);
+  const isStemMode = useGlobalStore((state) => state.isStemMode);
+  const toggleStemMode = useGlobalStore((state) => state.toggleStemMode);
 
   const handleStartSpatialAudio = () => {
     startSpatialAudio();
@@ -64,6 +67,29 @@ export const AudioControls = () => {
             </div>
           </div>
         </motion.div>
+        
+        <motion.div className="bg-neutral-800/20 rounded-md p-3 hover:bg-neutral-800/30 transition-colors">
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-neutral-300 flex items-center gap-1.5">
+              <Layers className="h-3 w-3 text-primary-500" />
+              <span>Stem Mode</span>
+            </div>
+            <Switch
+              checked={isStemMode}
+              onCheckedChange={(checked) => {
+                toggleStemMode();
+                posthog.capture(checked ? "enable_stem_mode" : "disable_stem_mode");
+              }}
+              disabled={isLoadingAudio}
+            />
+          </div>
+          {isStemMode && (
+            <p className="text-xs text-neutral-500 mt-2">
+              Each device plays a different stem
+            </p>
+          )}
+        </motion.div>
+        
         <div className="bg-neutral-800/20 rounded-md p-3 hover:bg-neutral-800/30 transition-colors">
           <div className="flex flex-col gap-2">
             <div className="text-xs text-neutral-500 flex items-center gap-1.5">

@@ -21,6 +21,7 @@ import { create } from "zustand";
 import { useRoomStore } from "./room";
 import { Mutex } from "async-mutex";
 import { extractFileNameFromUrl } from "@/lib/utils";
+import { STEMS, getAssignedStem } from "@/constants/stems";
 
 export const MAX_NTP_MEASUREMENTS = NTP_CONSTANTS.MAX_MEASUREMENTS;
 
@@ -82,6 +83,9 @@ interface GlobalStateValues {
     currentAttempt: number;
     maxAttempts: number;
   };
+  
+  // Stem mode
+  isStemMode: boolean;
 }
 
 interface GlobalState extends GlobalStateValues {
@@ -124,6 +128,7 @@ interface GlobalState extends GlobalStateValues {
   pauseAudio: (data: { when: number }) => void;
   getCurrentTrackPosition: () => number;
   toggleShuffle: () => void;
+  toggleStemMode: () => void;
   skipToNextTrack: (isAutoplay?: boolean) => void;
   skipToPreviousTrack: () => void;
   getCurrentGainValue: () => number;
@@ -179,6 +184,7 @@ const initialState: GlobalStateValues = {
     currentAttempt: 0,
     maxAttempts: 0,
   },
+  isStemMode: false,
 };
 
 const getAudioPlayer = (state: GlobalState) => {
@@ -893,6 +899,8 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
     },
 
     toggleShuffle: () => set((state) => ({ isShuffled: !state.isShuffled })),
+    
+    toggleStemMode: () => set((state) => ({ isStemMode: !state.isStemMode })),
 
     setIsSpatialAudioEnabled: (isEnabled) =>
       set({ isSpatialAudioEnabled: isEnabled }),
@@ -920,6 +928,40 @@ export const useGlobalStore = create<GlobalState>((set, get) => {
       }
 
       const state = get();
+      
+      // Check if in stem mode
+      if (state.isStemMode) {
+        // Get current client ID from localStorage
+        const currentClientId = typeof window !== "undefined" 
+          ? localStorage.getItem("clientId") || ""
+          : "";
+          
+        // Find current device index
+        const currentDeviceIndex = state.connectedClients.findIndex(
+          (client) => client.clientId === currentClientId
+        );
+        
+        if (currentDeviceIndex >= 0) {
+          // Get assigned stem for this device
+          const assignedStem = getAssignedStem(currentDeviceIndex);
+          
+          // Override sources with just the assigned stem
+          sources = [{ url: assignedStem.url }];
+          
+          // Also update audioSources state
+          set({ audioSources: sources });
+          
+          // If there's a selected audio URL that's not the stem, update it
+          if (state.selectedAudioUrl && state.selectedAudioUrl !== assignedStem.url) {
+            state.setSelectedAudioUrl(assignedStem.url);
+          }
+          
+          console.log(`Stem mode: Loading stem ${assignedStem.name} for device ${currentDeviceIndex}`);
+        }
+      } else {
+        // In normal mode, update audioSources
+        set({ audioSources: sources });
+      }
 
       // Find only new sources that have not already been loaded and then load them with loadAudioSourceUrl
       const newSources = sources.filter(
