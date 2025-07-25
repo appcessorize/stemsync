@@ -14,17 +14,17 @@ This document outlines the plan to implement stem-based audio distribution in Be
 
 ### Core Features
 
-1. **8-Stem Support**: Each song can have up to 8 individual stems (e.g., drums, bass, guitar, vocals, etc.)
+1. **10-Stem Support**: Each song can have up to 8 individual stems (e.g., drums, bass, guitar, vocals, etc.)
 2. **Dynamic Distribution**: Stems are distributed evenly across connected devices
 3. **Automatic Rebalancing**: When devices join/leave, stems are redistributed
-4. **Fallback Mode**: If fewer than 8 devices, some devices play multiple stems
+4. **Fallback Mode**: If fewer than 10 devices, some devices play multiple stems
 
 ### Distribution Algorithm
 
 ```
 Number of Devices | Stem Distribution
 ------------------|------------------
-1                 | Device plays all 8 stems (mixed)
+1                 | Device plays all 10 stems (mixed)
 2                 | Device 1: stems 1-4, Device 2: stems 5-8
 3                 | Device 1: stems 1-3, Device 2: stems 4-6, Device 3: stems 7-8
 4                 | Each device plays 2 stems
@@ -38,6 +38,7 @@ Number of Devices | Stem Distribution
 ### Phase 1: Data Model Updates
 
 #### 1.1 Update Shared Types
+
 ```typescript
 // packages/shared/src/types.ts
 export const StemSchema = z.object({
@@ -66,6 +67,7 @@ export const AudioSourceSchema = z.union([
 ```
 
 #### 1.2 Update Message Types
+
 ```typescript
 // Add stem assignment messages
 export const StemAssignmentSchema = z.object({
@@ -82,13 +84,12 @@ export const RequestStemReassignmentSchema = z.object({
 ### Phase 2: Server Implementation
 
 #### 2.1 Stem Distribution Logic
+
 Create `apps/server/src/services/stemDistributor.ts`:
+
 ```typescript
 export class StemDistributor {
-  distributeStems(
-    stems: string[],
-    clientIds: string[]
-  ): Map<string, string[]> {
+  distributeStems(stems: string[], clientIds: string[]): Map<string, string[]> {
     // Implementation of distribution algorithm
   }
 
@@ -103,6 +104,7 @@ export class StemDistributor {
 ```
 
 #### 2.2 Update RoomManager
+
 - Add stem assignment tracking
 - Handle stem distribution on client join/leave
 - Broadcast stem assignments to all clients
@@ -111,16 +113,17 @@ export class StemDistributor {
 ### Phase 3: Client Implementation
 
 #### 3.1 Update Audio Store
+
 ```typescript
 // apps/client/src/stores/useGlobalStore.ts
 interface GlobalStore {
   // Existing fields...
-  
+
   // New stem-related fields
   assignedStems: string[];
   stemBuffers: Map<string, AudioBuffer>;
   stemGainNodes: Map<string, GainNode>;
-  
+
   // New methods
   loadStems: (stems: Stem[]) => Promise<void>;
   playAssignedStems: (timestamp: number) => void;
@@ -129,11 +132,13 @@ interface GlobalStore {
 ```
 
 #### 3.2 Audio Loading Strategy
+
 - Load only assigned stems to save bandwidth
 - Pre-fetch stems that might be assigned if redistribution occurs
 - Cache loaded stems for quick reassignment
 
 #### 3.3 Playback Modifications
+
 - Modify play/pause logic to handle multiple audio sources
 - Ensure all assigned stems start/stop synchronously
 - Apply individual gain controls per stem
@@ -141,16 +146,19 @@ interface GlobalStore {
 ### Phase 4: UI Updates
 
 #### 4.1 Upload Interface
+
 - Support multi-file upload (up to 8 stems)
 - Stem naming and ordering interface
 - Validation that all stems have equal duration
 
 #### 4.2 Playback Display
+
 - Show which stems are assigned to current device
 - Visual indicator of stem distribution across room
 - Option to view/request specific stems
 
 #### 4.3 Admin Controls
+
 - Manual stem assignment override
 - Mix mode toggle (stems vs. single file)
 - Stem mute/solo controls
@@ -158,11 +166,13 @@ interface GlobalStore {
 ### Phase 5: Optimization & Edge Cases
 
 #### 5.1 Performance Optimization
+
 - Efficient buffer management for multiple audio streams
 - Optimize network usage for stem downloads
 - Smart caching strategy
 
 #### 5.2 Edge Case Handling
+
 - Device capability detection (can it handle multiple stems?)
 - Fallback for devices that can't play assigned stems
 - Handling of incomplete stem sets (< 8 stems)
@@ -171,6 +181,7 @@ interface GlobalStore {
 ### Phase 6: Testing & Validation
 
 #### 6.1 Test Scenarios
+
 - Single device playing all stems
 - Perfect 8-device scenario
 - Dynamic joining/leaving during playback
@@ -178,6 +189,7 @@ interface GlobalStore {
 - Mixed stem/single-file playlists
 
 #### 6.2 Performance Benchmarks
+
 - CPU usage with multiple stems
 - Memory consumption
 - Network bandwidth requirements
