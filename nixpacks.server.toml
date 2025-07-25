@@ -8,7 +8,7 @@ cmds = ["bun install"]
 cmds = ["bun run build --filter=server..."]
 
 [start]
-cmd = "bun run src/index.ts"
+cmd = "cd apps/server && bun run src/index.ts"
 
 [variables]
 PORT = "8080"

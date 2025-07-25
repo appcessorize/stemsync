@@ -5,10 +5,10 @@ nixPkgs = ["bun"]
 cmds = ["bun install"]
 
 [phases.build]
-cmds = ["bun run build --filter=server..."]
+cmds = ["bun run build --filter=client..."]
 
 [start]
-cmd = "bun run src/index.ts"
+cmd = "cd apps/client && bun run start"
 
 [variables]
-PORT = "8080"
+PORT = "3000"
