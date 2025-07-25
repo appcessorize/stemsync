@@ -130,7 +130,9 @@ export function StemDebugPanel() {
                 ) : isLoaded ? (
                   <CheckCircle className="w-3 h-3 text-green-500" />
                 ) : error ? (
-                  <XCircle className="w-3 h-3 text-red-500" title={error} />
+                  <div title={error}>
+                    <XCircle className="w-3 h-3 text-red-500" />
+                  </div>
                 ) : (
                   <Button
                     size="sm"
