@@ -1,0 +1,16 @@
+FROM oven/bun:1 as base
+WORKDIR /app
+
+# Copy everything
+COPY . .
+
+# Install dependencies
+RUN bun install
+
+# Build shared packages and client
+RUN bun run build --filter=client...
+
+WORKDIR /app/apps/client
+EXPOSE 3000
+
+CMD ["bun", "run", "start"]
